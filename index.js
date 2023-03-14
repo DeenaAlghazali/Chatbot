@@ -14,7 +14,6 @@ mongoose.connection.once("open", () => {
   console.log("MongoDB Connected!");
 });
 
-// require("./models/Menu");
 
 app.listen(8000, () => {
   console.log("SERVER IS RUNNING ON http://localhost:8000");

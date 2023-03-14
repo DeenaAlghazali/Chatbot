@@ -1,11 +1,14 @@
-const addMenuItems = require("./addMenuItems");
-const getMenu = require("./getMenu");
-const addOrderItems = require("./addOrderItems");
-const getOrder = require("./getOrder");
+const addMenuItems = require("./menu/addMenuItems");
+const getMenu = require("./menu/getMenu");
+const addOrderItems = require("./order/addOrderItems");
+const getOrder = require("./order/getOrder");
+const training = require("./chatbot/training");
+
 
 module.exports = {
   addMenuItems,
   getMenu,
   addOrderItems,
   getOrder,
+  training
 };
