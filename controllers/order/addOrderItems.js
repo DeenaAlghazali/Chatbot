@@ -1,9 +1,7 @@
 const Menu = require("../../models/Menu");
 const Order = require("../../models/Order");
 
-const addOrderItems = async (req, res) => {
-  const { name, quantity } = req.body;
-
+const addOrderItems = async (name, quantity) => {
   try {
     const meal = await Menu.findOne({ name });
     if (meal) {
@@ -14,16 +12,16 @@ const addOrderItems = async (req, res) => {
           { _id: order.id },
           { $set: { quantity: +quantity + order.quantity } }
         );
-        res.json("Success");
+        return order;
       } else {
-        new Order({
+        let newOrder = await new Order({
           quantity,
           menu_id: id,
         }).save();
-        res.json("Success");
+        return newOrder;
       }
     } else {
-      res.json("Meal not found yet in our menu");
+      return false;
     }
   } catch (err) {
     console.error(err);

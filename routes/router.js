@@ -5,10 +5,15 @@ const {
   addOrderItems,
   getOrder,
   training,
+  getAllMessages,
 } = require("../controllers");
 
-router.get("/", training);
+router.get("/favicon.ico", (req, res) => {
+  return res.json("test");
+});
+router.get("/getAllMessages", getAllMessages);
 router.route("/menu").post(addMenuItems).get(getMenu);
 router.route("/order").post(addOrderItems).get(getOrder);
+router.get("/:msg", training);
 
 module.exports = router;

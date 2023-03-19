@@ -1,49 +1,51 @@
 const Menu = require("../../models/Menu");
-var natural = require("natural");
-const addOrderItems = require("../order/addOrderItems");
+let natural = require("natural");
+const {
+  checkIfInMenu,
+  checkQuantity,
+  confirmOrder,
+  checkAddress,
+  welcomeMsg,
+} = require("./chatController");
 
-var classifier = new natural.BayesClassifier();
-//Wrong Spelling
-//wordFromDB = pizza;
-const getSimilars = (wordFromDB) => {
-  return ["pizzza", "pizzzzzzzzza"];
-  //library to provide similars words
-};
+const addMessage = require("./addMessage");
+const { getMessages } = require("./getMessage");
+let classifier = new natural.BayesClassifier();
 
-//
-const training = async (req, res) => {
+async function training(req, res) {
   const getAllItems = await Menu.find();
-  let similar = [];
-  //name from db
-  //name is handled
   getAllItems.forEach(({ name }) => {
-    similar.push({ key: name, data: getSimilars(name) });
-    //pizza(key): [pizzza, pizzzzzzzzzzzzzza](data)
+    classifier.addDocument(name, name);
   });
 
-  //
-  let data2Training = [];
-  similar.map(({ key, data }) => {
-    data.map((word) => {
-      // console.log(word, "word");
-      data2Training.push({ text: word, label: key });
-      //pizzza: pizza 
-      //pizzzzzzzzzzzzzza: pizza
-    });
-  });
-
-  data2Training.forEach((item) => {
-    console.log(item.text, item.label);
-    classifier.addDocument(item.text, item.label);
-  });
-
-  console.log(similar);
+  classifier.addDocument("Hi Hello", "Hi");
   classifier.train();
-  console.log(classifier.classify("i am test7"));
-  // ! TOCHANGE
-  req.body.name = classifier.classify("i am test7");
-  req.body.quantity = 1;
-  addOrderItems(req, res);
-};
+
+  await addMessage({
+    cookie: "test",
+    message: req.params.msg,
+    type: "received",
+    payload: {},
+  });
+
+  let msg = classifier.classify(req.params.msg);
+  let allMsgs = await getMessages();
+  let lastMsg = allMsgs[allMsgs.length - 1];
+
+  let step = lastMsg?.payload?.step;
+  if (msg == "Hi") {
+    return await welcomeMsg(res);
+  } else if (step == "greeting") {
+    return await checkIfInMenu(res, msg, getAllItems);
+  } else if (step == "order") {
+    await checkQuantity(req.params.msg, res, lastMsg);
+  } else if (step == "quantity") {
+    await confirmOrder(req, res, lastMsg);
+  } else if (step == "address") {
+    await checkAddress(res);
+  } else {
+    res.json("I don't understand what do you want");
+  }
+}
 
 module.exports = training;

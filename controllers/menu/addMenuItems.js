@@ -8,6 +8,7 @@ const addMenuItems = async (req, res) => {
     price,
   });
   await menuItems.save();
+  res.json(menuItems);
 };
 
 module.exports = addMenuItems;
