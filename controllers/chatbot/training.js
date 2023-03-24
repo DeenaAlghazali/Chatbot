@@ -24,8 +24,8 @@ async function training(req, res) {
   await addMessage({
     cookie: "test",
     message: req.params.msg,
-    type: "received",
-    payload: {},
+    type: "received",// coming from user
+    payload: {},  
   });
 
   let msg = classifier.classify(req.params.msg);

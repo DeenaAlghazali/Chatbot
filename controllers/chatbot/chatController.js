@@ -1,5 +1,15 @@
 const addOrderItems = require("../order/addOrderItems");
 const addMessage = require("./addMessage");
+const Menu = require("../../models/Menu");
+const Order = require("../../models/Order");
+const Chat = require("../../models/Chat")
+
+
+
+const meals = [];
+const singleOrder = {};
+
+
 
 async function checkIfInMenu(res, msg, meals) {
   let meal = await meals.filter((meal) => meal.name == msg);
@@ -50,7 +60,7 @@ async function confirmOrder(req, res, lastMsg) {
       message: `what do you want?`,
       type: "sent",
       payload: {
-        step: "greeting",
+        step: "greeting",//..
       },
     });
 
@@ -77,10 +87,58 @@ async function checkAddress(res) {
       step: "greeting",
     },
   });
-  return res.json("Will print the order table with a total price");
+
+const orders = await Order.find();
+const meals = [];
+total_price = 0;
+
+for (const element of orders) {
+  try {
+    const result = await Menu.findById(element.menu_id);
+    quantity = element.quantity ;
+    meals.push(result.name);
+    total_price += (result.price * quantity);
+  } catch (err) {
+    console.log(err);
+  }
+}
+
+const deleteAllDataOrder = async () => {
+  try {
+    await Order.deleteMany();
+    console.log('All Data successfully deleted');
+  } catch (err) {
+    console.log(err);
+  }
+};
+
+
+const deleteChat = async () => {
+  try {
+    await Chat.deleteMany();
+    console.log('Chat was successfully deleted');
+  } catch (err) {
+    console.log(err);
+  }
+};
+
+deleteAllDataOrder();
+deleteChat();
+
+  //return res.json("Will print the order table with a total price");
+  return res.json(`you ordered \n${meals.join("\n")} , with a total price of \n${total_price} `);
+
 }
 
 async function welcomeMsg(res) {
+
+  const getAllItems = await Menu.find();
+
+  if(meals.length===0){
+  getAllItems.forEach(({ name }) => {
+    meals.push(name);
+  });
+  }
   await addMessage({
     cookie: "test",
     message: "Welcome what do you need to order?",
@@ -89,7 +147,9 @@ async function welcomeMsg(res) {
       step: "greeting",
     },
   });
-  return res.json("Welcome what do you need to order?");
+  return res.json(
+    `Welcome to our restaurant, what would you like to order?\n${meals.map(meal => `${meal}\n`).join("<br>")}`
+  );
 }
 
 module.exports = {
