@@ -24,8 +24,8 @@ async function training(req, res) {
   await addMessage({
     cookie: "test",
     message: req.params.msg,
-    type: "received",// coming from user
-    payload: {},  
+    type: "received",
+    payload: {},
   });
 
   let msg = classifier.classify(req.params.msg);
@@ -42,7 +42,7 @@ async function training(req, res) {
   } else if (step == "quantity") {
     await confirmOrder(req, res, lastMsg);
   } else if (step == "address") {
-    await checkAddress(res);
+    await checkAddress(req, res);
   } else {
     res.json("I don't understand what do you want");
   }

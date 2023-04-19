@@ -2,14 +2,9 @@ const addOrderItems = require("../order/addOrderItems");
 const addMessage = require("./addMessage");
 const Menu = require("../../models/Menu");
 const Order = require("../../models/Order");
-const Chat = require("../../models/Chat")
-
-
+const Chat = require("../../models/Chat");
 
 const meals = [];
-const singleOrder = {};
-
-
 
 async function checkIfInMenu(res, msg, meals) {
   let meal = await meals.filter((meal) => meal.name == msg);
@@ -23,9 +18,13 @@ async function checkIfInMenu(res, msg, meals) {
         step: "order",
       },
     });
-    return res.json(`You ordered ${meal[0].name}, How many?`);
+    return res.json({
+      data: [{ message: `You ordered ${meal[0].name}, How many?` }],
+    });
   }
-  return res.json("Sorry the meal dose not exist");
+  return res.json({
+    data: [{ message: "Sorry the meal dose not exist" }],
+  });
 }
 
 async function checkQuantity(msg, res, lastMsg) {
@@ -42,13 +41,19 @@ async function checkQuantity(msg, res, lastMsg) {
       },
     });
 
-    return res.json(
-      `you ordered ${quantity} and Your total price is ${
-        quantity * lastMsg.payload?.order?.price
-      } Do you need anything else?`
-    );
+    return res.json({
+      data: [
+        {
+          message: `you ordered ${quantity} and Your total price is ${
+            quantity * lastMsg.payload?.order?.price
+          } Do you need anything else?`,
+        },
+      ],
+    });
   } else {
-    return res.json("You must enter a numeric value of quantity");
+    return res.json({
+      data: [{ message: "You must enter a numeric value of quantity" }],
+    });
   }
 }
 
@@ -60,11 +65,13 @@ async function confirmOrder(req, res, lastMsg) {
       message: `what do you want?`,
       type: "sent",
       payload: {
-        step: "greeting",//..
+        step: "greeting",
       },
     });
 
-    return res.json("what do you want?");
+    return res.json({
+      data: [{ message: "what do you want?" }],
+    });
   } else if (req.params.msg == "no") {
     await addMessage({
       cookie: "test",
@@ -74,11 +81,13 @@ async function confirmOrder(req, res, lastMsg) {
         step: "address",
       },
     });
-    return res.json("Please enter your address");
+    return res.json({
+      data: [{ message: "Please enter your address" }],
+    });
   }
 }
 
-async function checkAddress(res) {
+async function checkAddress(req, res) {
   await addMessage({
     cookie: "test",
     message: `You Ordered`,
@@ -88,56 +97,69 @@ async function checkAddress(res) {
     },
   });
 
-const orders = await Order.find();
-const meals = [];
-total_price = 0;
+  const orders = await Order.find();
+  const meals = [];
+  total_price = 0;
 
-for (const element of orders) {
-  try {
-    const result = await Menu.findById(element.menu_id);
-    quantity = element.quantity ;
-    meals.push(result.name);
-    total_price += (result.price * quantity);
-  } catch (err) {
-    console.log(err);
+  for (const element of orders) {
+    try {
+      const result = await Menu.findById(element.menu_id);
+      quantity = element.quantity;
+      meals.push({
+        name: result.name,
+        price: result.price,
+        quantity,
+        total: result.price * quantity,
+      });
+      total_price += result.price * quantity;
+    } catch (err) {
+      console.log(err);
+    }
   }
-}
 
-const deleteAllDataOrder = async () => {
-  try {
-    await Order.deleteMany();
-    console.log('All Data successfully deleted');
-  } catch (err) {
-    console.log(err);
-  }
-};
+  const deleteAllDataOrder = async () => {
+    try {
+      await Order.deleteMany();
+      console.log("All Data successfully deleted");
+    } catch (err) {
+      console.log(err);
+    }
+  };
 
+  const deleteChat = async () => {
+    try {
+      await Chat.deleteMany();
+      console.log("Chat was successfully deleted");
+    } catch (err) {
+      console.log(err);
+    }
+  };
+  res.clearCookie("id");
 
-const deleteChat = async () => {
-  try {
-    await Chat.deleteMany();
-    console.log('Chat was successfully deleted');
-  } catch (err) {
-    console.log(err);
-  }
-};
+  setTimeout(() => {
+    console.log(req.cookies);
+    deleteAllDataOrder();
+    deleteChat();
+  }, 10000);
 
-deleteAllDataOrder();
-deleteChat();
-
-  //return res.json("Will print the order table with a total price");
-  return res.json(`you ordered \n${meals.join("\n")} , with a total price of \n${total_price} `);
-
+  return res.json({
+    data: [
+      { message: "Your order: " },
+      { meals },
+      { totalPrice: `total price = ${total_price}` },
+    ],
+  });
 }
 
 async function welcomeMsg(res) {
+  res.cookie("id", "chatbot");
 
   const getAllItems = await Menu.find();
 
-  if(meals.length===0){
-  getAllItems.forEach(({ name }) => {
-    meals.push(name);
-  });
+  if (meals.length === 0) {
+    getAllItems.forEach(({ name, price }) => {
+      meals.push({ name, price });
+    });
   }
   await addMessage({
     cookie: "test",
@@ -147,9 +169,13 @@ async function welcomeMsg(res) {
       step: "greeting",
     },
   });
-  return res.json(
-    `Welcome to our restaurant, what would you like to order?\n${meals.map(meal => `${meal}\n`).join("<br>")}`
-  );
+
+  return res.json({
+    data: [
+      { message: `Welcome to our restaurant, what would you like to order?` },
+      { meals },
+    ],
+  });
 }
 
 module.exports = {
