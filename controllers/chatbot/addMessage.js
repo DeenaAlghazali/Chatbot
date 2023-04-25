@@ -5,6 +5,7 @@ const addMessage = async (message) => {
     message: message.message,
     type: message.type,
     payload: message.payload,
+    cookie: message.cookie,
   });
   await chatMessage.save();
 };
