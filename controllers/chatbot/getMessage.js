@@ -1,7 +1,9 @@
 const Chat = require("../../models/Chat");
 
 const getMessages = async () => {
-  const messages = await Chat.find({ type: "sent" });
+  const messages = await Chat.find({
+    $and: [{ type: "sent" }, { cookie: "1234" }],
+  });
   return messages;
 };
 

@@ -22,23 +22,23 @@ async function training(req, res) {
   classifier.train();
 
   await addMessage({
-    cookie: "test",
+    cookie: req.cookies["message"],
     message: req.params.msg,
     type: "received",
     payload: {},
   });
 
   let msg = classifier.classify(req.params.msg);
-  let allMsgs = await getMessages();
+  let allMsgs = await getMessages(req.cookies["message"]);
   let lastMsg = allMsgs[allMsgs.length - 1];
 
   let step = lastMsg?.payload?.step;
   if (msg == "Hi") {
     return await welcomeMsg(res);
   } else if (step == "greeting") {
-    return await checkIfInMenu(res, msg, getAllItems);
+    return await checkIfInMenu(req, res, msg, getAllItems);
   } else if (step == "order") {
-    await checkQuantity(req.params.msg, res, lastMsg);
+    await checkQuantity(req, req.params.msg, res, lastMsg);
   } else if (step == "quantity") {
     await confirmOrder(req, res, lastMsg);
   } else if (step == "address") {

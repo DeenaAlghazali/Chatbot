@@ -6,11 +6,11 @@ const Chat = require("../../models/Chat");
 
 const meals = [];
 
-async function checkIfInMenu(res, msg, meals) {
+async function checkIfInMenu(req, res, msg, meals) {
   let meal = await meals.filter((meal) => meal.name == msg);
   if (meal) {
     await addMessage({
-      cookie: "test",
+      cookie: req.cookies["message"],
       message: `You ordered ${meal[0].name}, How many?`,
       type: "sent",
       payload: {
@@ -27,12 +27,14 @@ async function checkIfInMenu(res, msg, meals) {
   });
 }
 
-async function checkQuantity(msg, res, lastMsg) {
+async function checkQuantity(req, msg, res, lastMsg) {
   let quantity = msg.match(/(\d+)/) ? parseInt(msg.match(/(\d+)/)[0]) : "";
   if (typeof quantity == "number") {
     await addMessage({
-      cookie: "test",
-      message: `you ordered ${quantity}`,
+      cookie: req.cookies["message"],
+      message: `you ordered ${quantity} and Your total price is ${
+        quantity * lastMsg.payload?.order?.price
+      } Do you need anything else?`,
       type: "sent",
       payload: {
         quantity: quantity,
@@ -61,7 +63,7 @@ async function confirmOrder(req, res, lastMsg) {
   addOrderItems(lastMsg.payload.order.name, lastMsg.payload.quantity);
   if (req.params.msg == "yes") {
     await addMessage({
-      cookie: "test",
+      cookie: req.cookies["message"],
       message: `what do you want?`,
       type: "sent",
       payload: {
@@ -74,7 +76,7 @@ async function confirmOrder(req, res, lastMsg) {
     });
   } else if (req.params.msg == "no") {
     await addMessage({
-      cookie: "test",
+      cookie: req.cookies["message"],
       message: `Please enter your address`,
       type: "sent",
       payload: {
@@ -88,15 +90,6 @@ async function confirmOrder(req, res, lastMsg) {
 }
 
 async function checkAddress(req, res) {
-  await addMessage({
-    cookie: "test",
-    message: `You Ordered`,
-    type: "sent",
-    payload: {
-      step: "greeting",
-    },
-  });
-
   const orders = await Order.find();
   const meals = [];
   total_price = 0;
@@ -116,6 +109,16 @@ async function checkAddress(req, res) {
       console.log(err);
     }
   }
+  await addMessage({
+    cookie: req.cookies["message"],
+    message: `Your order: `,
+    type: "sent",
+    payload: {
+      step: "greeting",
+      meals,
+      totalPrice: `total price = ${total_price}`,
+    },
+  });
 
   const deleteAllDataOrder = async () => {
     try {
@@ -135,18 +138,20 @@ async function checkAddress(req, res) {
     }
   };
   res.clearCookie("id");
+  res.clearCookie("message");
 
   setTimeout(() => {
-    console.log(req.cookies);
     deleteAllDataOrder();
     deleteChat();
   }, 10000);
 
   return res.json({
     data: [
-      { message: "Your order: " },
-      { meals },
-      { totalPrice: `total price = ${total_price}` },
+      {
+        message: "Your order: ",
+        meals,
+        totalPrice: `total price = ${total_price}`,
+      },
     ],
   });
 }
@@ -162,18 +167,22 @@ async function welcomeMsg(res) {
     });
   }
   await addMessage({
-    cookie: "test",
-    message: "Welcome what do you need to order?",
+    cookie: "1234",
+    message: "Welcome to our restaurant, what would you like to order?",
     type: "sent",
     payload: {
       step: "greeting",
+      meals,
     },
   });
-
+  res.cookie("message", "1234");
   return res.json({
     data: [
-      { message: `Welcome to our restaurant, what would you like to order?` },
-      { meals },
+      {
+        message: `Welcome to our restaurant, what would you like to order?`,
+        meals,
+        type: "sent",
+      },
     ],
   });
 }
