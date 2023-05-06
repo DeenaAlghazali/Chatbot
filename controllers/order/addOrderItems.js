@@ -1,5 +1,4 @@
-const Menu = require("../../models/Menu");
-const Order = require("../../models/Order");
+const { Menu, Order } = require("../../models");
 
 const addOrderItems = async (name, quantity) => {
   try {

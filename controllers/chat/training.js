@@ -1,15 +1,14 @@
-const Menu = require("../../models/Menu");
 let natural = require("natural");
+const { Menu } = require("../../models");
+const { addMessage, getMessages } = require("../messages");
 const {
   checkIfInMenu,
   checkQuantity,
   confirmOrder,
   checkAddress,
   welcomeMsg,
-} = require("./chatController");
+} = require("./index");
 
-const addMessage = require("./addMessage");
-const { getMessages } = require("./getMessage");
 let classifier = new natural.BayesClassifier();
 
 async function training(req, res) {
@@ -36,7 +35,7 @@ async function training(req, res) {
   if (msg == "Hi") {
     return await welcomeMsg(res);
   } else if (step == "greeting") {
-    return await checkIfInMenu(req, res, msg, getAllItems);
+    return await checkIfInMenu(req, res, req.params.msg, getAllItems);
   } else if (step == "order") {
     await checkQuantity(req, req.params.msg, res, lastMsg);
   } else if (step == "quantity") {
