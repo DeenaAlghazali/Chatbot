@@ -14,21 +14,22 @@ const checkIfInMenu = async (req, res, msg, meals) => {
   });
 
   const result = fuse.search(msg);
-  let meal = await meals.filter((meal) => meal.name == result[0].item);
-
-  if (meal) {
-    await addMessage({
-      cookie: req.cookies["message"],
-      message: `You ordered ${meal[0].name}, How many?`,
-      type: "sent",
-      payload: {
-        order: meal[0],
-        step: "order",
-      },
-    });
-    return res.json({
-      data: [{ message: `You ordered ${meal[0].name}, How many?` }],
-    });
+  if (result.length > 0) {
+    let meal = await meals.filter((meal) => meal.name == result[0]?.item);
+    if (meal) {
+      await addMessage({
+        cookie: req.cookies["message"],
+        message: `You ordered ${meal[0].name}, How many?`,
+        type: "sent",
+        payload: {
+          order: meal[0],
+          step: "order",
+        },
+      });
+      return res.json({
+        data: [{ message: `You ordered ${meal[0].name}, How many?` }],
+      });
+    }
   }
   return res.json({
     data: [{ message: "Sorry the meal dose not exist" }],
